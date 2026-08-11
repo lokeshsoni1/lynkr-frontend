@@ -31,9 +31,9 @@ function RegisterPage() {
         <h1 className="mt-3 text-2xl font-semibold tracking-tight">Create your account</h1>
         <form
           className="mt-8 space-y-5"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            register(name, email);
+            await register(name, email, password);
             navigate({ to: "/links" });
           }}
         >

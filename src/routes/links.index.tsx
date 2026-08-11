@@ -219,9 +219,9 @@ function LinksPage() {
           </DialogHeader>
           <form
             className="space-y-5"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
-              createLink({ original, alias, expiration });
+              await createLink({ original, alias, expiration });
               setOriginal("");
               setAlias("");
               setExpiration("never");
@@ -287,8 +287,8 @@ function LinksPage() {
             </Button>
             <Button
               variant="destructive"
-              onClick={() => {
-                if (toDelete) deleteLink(toDelete.id);
+              onClick={async () => {
+                if (toDelete) await deleteLink(toDelete.id);
                 setToDelete(null);
               }}
             >

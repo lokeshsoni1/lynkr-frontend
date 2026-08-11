@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { BreakdownBars, ClicksChart, StatCard } from "@/components/analytics-widgets";
 import { useStore } from "@/lib/store";
+import { apiClient } from "@/api/client";
 import {
   BROWSERS,
   CLICKS_30D,
@@ -26,11 +27,26 @@ export const Route = createFileRoute("/analytics")({
 });
 
 function AnalyticsPage() {
-  const { links } = useStore();
+  const { links, token } = useStore();
   const [range, setRange] = useState<"7" | "30">("7");
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
 
-  const totalClicks = links.reduce((sum, l) => sum + l.clicks, 0);
-  const activeLinks = links.filter((l) => !isExpired(l)).length;
+  useEffect(() => {
+    if (!token) return;
+    apiClient
+      .get("/api/analytics/overview")
+      .then((res) => {
+        setAnalyticsData(res.data);
+      })
+      .catch((err) => {
+        console.warn("Backend analytics overview endpoint unavailable, using computed state", err);
+      });
+  }, [token]);
+
+  const computedClicks = links.reduce((sum, l) => sum + l.clicks, 0);
+  const totalClicks = analyticsData?.totalClicks !== undefined ? analyticsData.totalClicks : computedClicks;
+  const activeLinks = analyticsData?.activeLinks !== undefined ? analyticsData.activeLinks : links.filter((l) => !isExpired(l)).length;
+  const totalLinksCount = analyticsData?.totalLinks !== undefined ? analyticsData.totalLinks : links.length;
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
@@ -43,7 +59,7 @@ function AnalyticsPage() {
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="TOTAL CLICKS" value={totalClicks.toLocaleString()} />
         <StatCard label="UNIQUE VISITORS" value={Math.round(totalClicks * 0.69).toLocaleString()} />
-        <StatCard label="TOTAL LINKS" value={links.length.toString()} />
+        <StatCard label="TOTAL LINKS" value={totalLinksCount.toString()} />
         <StatCard label="ACTIVE LINKS" value={activeLinks.toString()} />
       </div>
 

@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { BreakdownBars, ClicksChart, StatCard, StatusPill } from "@/components/analytics-widgets";
-import { useStore } from "@/lib/store";
+import { useStore, transformLink } from "@/lib/store";
+import { apiClient } from "@/api/client";
 import {
   BROWSERS,
   CLICKS_30D,
@@ -12,6 +13,7 @@ import {
   REFERRERS,
   formatDate,
   isExpired,
+  type LinkRecord,
 } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/links/$id")({
@@ -29,8 +31,37 @@ export const Route = createFileRoute("/links/$id")({
 function LinkDetail() {
   const { id } = Route.useParams();
   const { links } = useStore();
-  const link = links.find((l) => l.id === id);
+  const [apiLink, setApiLink] = useState<LinkRecord | null>(null);
+  const [loading, setLoading] = useState(false);
   const [range, setRange] = useState<"7" | "30">("7");
+
+  useEffect(() => {
+    const existing = links.find((l) => l.id === id);
+    if (existing) {
+      setApiLink(existing);
+      return;
+    }
+    setLoading(true);
+    apiClient
+      .get(`/api/links/${id}`)
+      .then((res) => {
+        setApiLink(transformLink(res.data));
+      })
+      .catch((err) => {
+        console.warn(`Failed to fetch link ${id} details from API`, err);
+      })
+      .finally(() => setLoading(false));
+  }, [id, links]);
+
+  const link = apiLink || links.find((l) => l.id === id);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-6xl px-6 py-24">
+        <p className="text-sm text-muted-foreground">Loading link details...</p>
+      </div>
+    );
+  }
 
   if (!link) {
     return (

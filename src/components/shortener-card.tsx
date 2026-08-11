@@ -28,17 +28,20 @@ export function ShortenerCard() {
   const [result, setResult] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url.trim()) return;
     setLoading(true);
     setResult(null);
-    setTimeout(() => {
-      const link = createLink({ original: url.trim(), alias, expiration });
+    try {
+      const link = await createLink({ original: url.trim(), alias, expiration });
       setResult(`${SHORT_DOMAIN}/${link.slug}`);
+    } catch {
+      /* ignore */
+    } finally {
       setLoading(false);
       setCopied(false);
-    }, 900);
+    }
   };
 
   const copy = async () => {

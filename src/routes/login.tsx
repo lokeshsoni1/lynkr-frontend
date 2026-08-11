@@ -30,9 +30,9 @@ function LoginPage() {
         <h1 className="mt-3 text-2xl font-semibold tracking-tight">Log in to Lynkr</h1>
         <form
           className="mt-8 space-y-5"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            login(email);
+            await login(email, password);
             navigate({ to: "/links" });
           }}
         >
