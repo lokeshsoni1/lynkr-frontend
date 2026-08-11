@@ -22,8 +22,8 @@ import { Check, Copy, Link2 } from "lucide-react";
 
 export function ShortenerCard() {
   const { createLink } = useStore();
-  const [url, setUrl] = useState("");
-  const [alias, setAlias] = useState("");
+  const [inputUrl, setInputUrl] = useState("");
+  const [aliasInput, setAliasInput] = useState("");
   const [expiration, setExpiration] = useState("never");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -33,13 +33,13 @@ export function ShortenerCard() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!url.trim()) return;
+    if (!inputUrl.trim()) return;
     setLoading(true);
     setResult(null);
     setError(null);
     try {
-      const link = await createLink({ original: url.trim(), alias, expiration });
-      const rawCodeOrUrl = (link as any).shortUrl || (link as any).shortCode || link.slug || alias?.trim() || "";
+      const link = await createLink({ original: inputUrl.trim(), alias: aliasInput, expiration });
+      const rawCodeOrUrl = (link as any).shortUrl || (link as any).shortCode || link.slug || aliasInput?.trim() || "";
       const generatedShortUrl = formatShortUrl(rawCodeOrUrl);
       setResult(generatedShortUrl);
     } catch (err: any) {
@@ -71,10 +71,12 @@ export function ShortenerCard() {
         <div className="relative flex-1">
           <Link2 className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            value={inputUrl}
+            onChange={(e) => setInputUrl(e.target.value)}
             placeholder="Paste your long URL here..."
             className="h-12 w-full pl-9"
+            autoComplete="off"
+            spellCheck={false}
           />
         </div>
         <Button
@@ -98,9 +100,11 @@ export function ShortenerCard() {
                 <Label htmlFor="alias">Custom alias</Label>
                 <Input
                   id="alias"
-                  value={alias}
-                  onChange={(e) => setAlias(e.target.value)}
+                  value={aliasInput}
+                  onChange={(e) => setAliasInput(e.target.value)}
                   placeholder="my-campaign"
+                  autoComplete="off"
+                  spellCheck={false}
                 />
               </div>
               <div className="space-y-2">
