@@ -13,7 +13,7 @@ export const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("lynkr_token");
+    const token = localStorage.getItem("jwt_token") || localStorage.getItem("lynkr_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

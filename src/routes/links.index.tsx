@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,7 +56,8 @@ export const Route = createFileRoute("/links/")({
 });
 
 function LinksPage() {
-  const { links, createLink, deleteLink } = useStore();
+  const { user, links, createLink, deleteLink } = useStore();
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [toDelete, setToDelete] = useState<LinkRecord | null>(null);
@@ -65,6 +66,13 @@ function LinksPage() {
   const [original, setOriginal] = useState("");
   const [alias, setAlias] = useState("");
   const [expiration, setExpiration] = useState("never");
+  const [createError, setCreateError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      navigate({ to: "/login" });
+    }
+  }, [user, navigate]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -84,6 +92,10 @@ function LinksPage() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
@@ -94,7 +106,7 @@ function LinksPage() {
             {links.length} links total · {links.filter((l) => !isExpired(l)).length} active
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>Create Short Link</Button>
+        <Button onClick={() => { setCreateError(null); setCreateOpen(true); }}>Create Short Link</Button>
       </div>
 
       <div className="relative mt-8 max-w-sm">
@@ -124,15 +136,16 @@ function LinksPage() {
             {filtered.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
-                  No links match your search.
+                  {links.length === 0 ? "No links created yet." : "No links match your search."}
                 </TableCell>
               </TableRow>
             )}
             {filtered.map((link) => {
               const expired = isExpired(link);
+              const displayUrl = `${SHORT_DOMAIN.replace(/^https?:\/\//, "")}/${link.slug}`;
               return (
                 <TableRow key={link.id} className="transition-colors hover:bg-secondary/40">
-                  <TableCell className="font-mono text-sm">lynkr.ly/{link.slug}</TableCell>
+                  <TableCell className="font-mono text-sm">{displayUrl}</TableCell>
                   <TableCell className="max-w-[260px] truncate text-sm text-muted-foreground">
                     {link.original}
                   </TableCell>
@@ -221,13 +234,27 @@ function LinksPage() {
             className="space-y-5"
             onSubmit={async (e) => {
               e.preventDefault();
-              await createLink({ original, alias, expiration });
-              setOriginal("");
-              setAlias("");
-              setExpiration("never");
-              setCreateOpen(false);
+              setCreateError(null);
+              try {
+                await createLink({ original, alias, expiration });
+                setOriginal("");
+                setAlias("");
+                setExpiration("never");
+                setCreateOpen(false);
+              } catch (err: any) {
+                if (err.response && (err.response.status === 400 || err.response.status === 409)) {
+                  setCreateError("Custom alias is already in use. Try another.");
+                } else {
+                  setCreateError("Failed to create short link. Try again.");
+                }
+              }
             }}
           >
+            {createError && (
+              <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive font-medium">
+                {createError}
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="destination">Destination URL</Label>
               <Input
@@ -277,7 +304,7 @@ function LinksPage() {
           <DialogHeader>
             <DialogTitle>Delete link</DialogTitle>
             <DialogDescription>
-              This will permanently delete lynkr.ly/{toDelete?.slug}. Anyone visiting it
+              This will permanently delete {SHORT_DOMAIN.replace(/^https?:\/\//, "")}/{toDelete?.slug}. Anyone visiting it
               will get a 404.
             </DialogDescription>
           </DialogHeader>

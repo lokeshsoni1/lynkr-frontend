@@ -11,6 +11,7 @@ import {
   DEVICES,
   RECENT_ACTIVITY,
   REFERRERS,
+  SHORT_DOMAIN,
   formatDate,
   isExpired,
   type LinkRecord,
@@ -78,6 +79,7 @@ function LinkDetail() {
   }
 
   const expired = isExpired(link);
+  const displayUrl = `${SHORT_DOMAIN.replace(/^https?:\/\//, "")}/${link.slug}`;
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
@@ -86,7 +88,7 @@ function LinkDetail() {
       </Link>
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <h1 className="font-mono text-2xl font-semibold tracking-tight">
-          lynkr.ly/{link.slug}
+          {displayUrl}
         </h1>
         <StatusPill expired={expired} />
       </div>
@@ -98,7 +100,7 @@ function LinkDetail() {
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="TOTAL CLICKS" value={link.clicks.toLocaleString()} />
         <StatCard label="UNIQUE VISITORS" value={Math.round(link.clicks * 0.69).toLocaleString()} />
-        <StatCard label="AVG. CLICKS / DAY" value={Math.max(1, Math.round(link.clicks / 14)).toString()} />
+        <StatCard label="AVG. CLICKS / DAY" value={Math.max(0, Math.round(link.clicks / 14)).toString()} />
         <StatCard label="STATUS" value={expired ? "Expired" : "Active"} />
       </div>
 
@@ -123,7 +125,11 @@ function LinkDetail() {
           </div>
         </div>
         <div className="mt-6">
-          <ClicksChart data={range === "7" ? CLICKS_7D : CLICKS_30D} />
+          {(range === "7" ? CLICKS_7D : CLICKS_30D).length === 0 ? (
+            <p className="py-12 text-center text-sm text-muted-foreground">No click activity recorded yet for this link.</p>
+          ) : (
+            <ClicksChart data={range === "7" ? CLICKS_7D : CLICKS_30D} />
+          )}
         </div>
       </div>
 
@@ -131,36 +137,52 @@ function LinkDetail() {
         <div className="panel p-6">
           <p className="eyebrow">DEVICES</p>
           <div className="mt-5">
-            <BreakdownBars items={DEVICES} />
+            {DEVICES.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">No data available</p>
+            ) : (
+              <BreakdownBars items={DEVICES} />
+            )}
           </div>
         </div>
         <div className="panel p-6">
           <p className="eyebrow">BROWSERS</p>
           <div className="mt-5">
-            <BreakdownBars items={BROWSERS} />
+            {BROWSERS.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">No data available</p>
+            ) : (
+              <BreakdownBars items={BROWSERS} />
+            )}
           </div>
         </div>
         <div className="panel p-6">
           <p className="eyebrow">TRAFFIC SOURCES</p>
           <div className="mt-5">
-            <BreakdownBars items={REFERRERS} />
+            {REFERRERS.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">No data available</p>
+            ) : (
+              <BreakdownBars items={REFERRERS} />
+            )}
           </div>
         </div>
       </div>
 
       <div className="panel mt-6 p-6">
         <p className="eyebrow">RECENT ACTIVITY</p>
-        <ul className="mt-5 divide-y divide-border">
-          {RECENT_ACTIVITY.map((a, i) => (
-            <li key={i} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
-              <span className="font-mono text-muted-foreground">lynkr.ly/{link.slug}</span>
-              <span className="text-muted-foreground">
-                {a.device} · {a.source}
-              </span>
-              <span className="text-xs text-muted-foreground">{a.time}</span>
-            </li>
-          ))}
-        </ul>
+        {RECENT_ACTIVITY.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">No recent click activity recorded.</p>
+        ) : (
+          <ul className="mt-5 divide-y divide-border">
+            {RECENT_ACTIVITY.map((a, i) => (
+              <li key={i} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+                <span className="font-mono text-muted-foreground">{displayUrl}</span>
+                <span className="text-muted-foreground">
+                  {a.device} · {a.source}
+                </span>
+                <span className="text-xs text-muted-foreground">{a.time}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

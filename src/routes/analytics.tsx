@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { BreakdownBars, ClicksChart, StatCard } from "@/components/analytics-widgets";
@@ -11,6 +11,7 @@ import {
   DEVICES,
   RECENT_ACTIVITY,
   REFERRERS,
+  SHORT_DOMAIN,
   isExpired,
 } from "@/lib/mock-data";
 
@@ -27,21 +28,29 @@ export const Route = createFileRoute("/analytics")({
 });
 
 function AnalyticsPage() {
-  const { links, token } = useStore();
+  const { user, links, token } = useStore();
+  const navigate = useNavigate();
   const [range, setRange] = useState<"7" | "30">("7");
   const [analyticsData, setAnalyticsData] = useState<any>(null);
 
   useEffect(() => {
+    if (!user) {
+      navigate({ to: "/login" });
+      return;
+    }
     if (!token) return;
     apiClient
-      .get("/api/analytics/overview")
+      .get("/api/v1/analytics/overview")
+      .catch(() => apiClient.get("/api/analytics/overview"))
       .then((res) => {
         setAnalyticsData(res.data);
       })
       .catch((err) => {
         console.warn("Backend analytics overview endpoint unavailable, using computed state", err);
       });
-  }, [token]);
+  }, [user, token, navigate]);
+
+  if (!user) return null;
 
   const computedClicks = links.reduce((sum, l) => sum + l.clicks, 0);
   const totalClicks = analyticsData?.totalClicks !== undefined ? analyticsData.totalClicks : computedClicks;
@@ -84,7 +93,11 @@ function AnalyticsPage() {
           </div>
         </div>
         <div className="mt-6">
-          <ClicksChart data={range === "7" ? CLICKS_7D : CLICKS_30D} />
+          {(range === "7" ? CLICKS_7D : CLICKS_30D).length === 0 ? (
+            <p className="py-12 text-center text-sm text-muted-foreground">No click activity recorded yet.</p>
+          ) : (
+            <ClicksChart data={range === "7" ? CLICKS_7D : CLICKS_30D} />
+          )}
         </div>
       </div>
 
@@ -92,36 +105,52 @@ function AnalyticsPage() {
         <div className="panel p-6">
           <p className="eyebrow">DEVICES</p>
           <div className="mt-5">
-            <BreakdownBars items={DEVICES} />
+            {DEVICES.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">No data available</p>
+            ) : (
+              <BreakdownBars items={DEVICES} />
+            )}
           </div>
         </div>
         <div className="panel p-6">
           <p className="eyebrow">BROWSERS</p>
           <div className="mt-5">
-            <BreakdownBars items={BROWSERS} />
+            {BROWSERS.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">No data available</p>
+            ) : (
+              <BreakdownBars items={BROWSERS} />
+            )}
           </div>
         </div>
         <div className="panel p-6">
           <p className="eyebrow">TRAFFIC SOURCES</p>
           <div className="mt-5">
-            <BreakdownBars items={REFERRERS} />
+            {REFERRERS.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">No data available</p>
+            ) : (
+              <BreakdownBars items={REFERRERS} />
+            )}
           </div>
         </div>
       </div>
 
       <div className="panel mt-6 p-6">
         <p className="eyebrow">RECENT ACTIVITY</p>
-        <ul className="mt-5 divide-y divide-border">
-          {RECENT_ACTIVITY.map((a, i) => (
-            <li key={i} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
-              <span className="font-mono text-muted-foreground">lynkr.ly/{a.slug}</span>
-              <span className="text-muted-foreground">
-                {a.device} · {a.source}
-              </span>
-              <span className="text-xs text-muted-foreground">{a.time}</span>
-            </li>
-          ))}
-        </ul>
+        {RECENT_ACTIVITY.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">No recent click activity recorded.</p>
+        ) : (
+          <ul className="mt-5 divide-y divide-border">
+            {RECENT_ACTIVITY.map((a, i) => (
+              <li key={i} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+                <span className="font-mono text-muted-foreground">{SHORT_DOMAIN.replace(/^https?:\/\//, "")}/{a.slug}</span>
+                <span className="text-muted-foreground">
+                  {a.device} · {a.source}
+                </span>
+                <span className="text-xs text-muted-foreground">{a.time}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

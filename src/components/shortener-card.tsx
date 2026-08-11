@@ -28,16 +28,23 @@ export function ShortenerCard() {
   const [result, setResult] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  const [error, setError] = useState<string | null>(null);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url.trim()) return;
     setLoading(true);
     setResult(null);
+    setError(null);
     try {
       const link = await createLink({ original: url.trim(), alias, expiration });
       setResult(`${SHORT_DOMAIN}/${link.slug}`);
-    } catch {
-      /* ignore */
+    } catch (err: any) {
+      if (err.response && (err.response.status === 400 || err.response.status === 409)) {
+        setError("Custom alias is already in use. Try another.");
+      } else {
+        setError("Failed to create short link. Please try again.");
+      }
     } finally {
       setLoading(false);
       setCopied(false);
@@ -112,6 +119,12 @@ export function ShortenerCard() {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+
+      {error && (
+        <div className="mt-4 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive font-medium">
+          {error}
+        </div>
+      )}
 
       {result && (
         <div className="mt-4 flex animate-fade-in flex-col gap-3 rounded-xl border border-border bg-secondary/60 p-4 sm:flex-row sm:items-center sm:justify-between">

@@ -60,7 +60,7 @@ type Store = {
 const StoreContext = createContext<Store | null>(null);
 
 const USER_KEY = "lynkr.user";
-const TOKEN_KEY = "lynkr_token";
+const TOKEN_KEY = "jwt_token";
 
 export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -70,7 +70,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      const savedToken = localStorage.getItem(TOKEN_KEY);
+      const savedToken = localStorage.getItem(TOKEN_KEY) || localStorage.getItem("lynkr_token");
       const savedUser = localStorage.getItem(USER_KEY);
       if (savedToken) setToken(savedToken);
       if (savedUser) setUser(JSON.parse(savedUser));
@@ -82,12 +82,17 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const fetchLinks = useCallback(async () => {
     setLoadingLinks(true);
     try {
-      const res = await apiClient.get("/api/links");
+      let res;
+      try {
+        res = await apiClient.get("/api/v1/urls");
+      } catch {
+        res = await apiClient.get("/api/links");
+      }
       const rawData = Array.isArray(res.data) ? res.data : res.data.content || [];
       const transformed = rawData.map(transformLink);
       setLinks(transformed);
     } catch (err) {
-      console.warn("Could not fetch links from backend, fallbacking to local state", err);
+      console.warn("Could not fetch links from backend", err);
     } finally {
       setLoadingLinks(false);
     }
@@ -102,59 +107,51 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   }, [token, fetchLinks]);
 
   const login = useCallback(async (email: string, password = "password123") => {
+    let res;
     try {
-      const res = await apiClient.post("/api/auth/login", { email, password });
-      const authData = res.data;
-      const jwtToken = authData.token || authData.jwt || authData.accessToken;
-      const userObj = {
-        name: authData.name || authData.username || email.split("@")[0] || "User",
-        email: authData.email || email,
-        token: jwtToken,
-      };
-
-      if (jwtToken) {
-        localStorage.setItem(TOKEN_KEY, jwtToken);
-        setToken(jwtToken);
-      }
-      localStorage.setItem(USER_KEY, JSON.stringify(userObj));
-      setUser(userObj);
-    } catch (err) {
-      console.warn("Backend auth/login failed, setting client session", err);
-      const fallbackToken = "demo-jwt-token";
-      const fallbackUser = { name: email.split("@")[0] || "User", email, token: fallbackToken };
-      localStorage.setItem(TOKEN_KEY, fallbackToken);
-      localStorage.setItem(USER_KEY, JSON.stringify(fallbackUser));
-      setToken(fallbackToken);
-      setUser(fallbackUser);
+      res = await apiClient.post("/api/v1/auth/login", { email, password });
+    } catch {
+      res = await apiClient.post("/api/auth/login", { email, password });
     }
+    const authData = res.data;
+    const jwtToken = authData.jwt_token || authData.token || authData.jwt || authData.accessToken;
+    const userObj = {
+      name: authData.name || authData.username || email.split("@")[0] || "User",
+      email: authData.email || email,
+      token: jwtToken,
+    };
+
+    if (jwtToken) {
+      localStorage.setItem(TOKEN_KEY, jwtToken);
+      localStorage.setItem("lynkr_token", jwtToken);
+      setToken(jwtToken);
+    }
+    localStorage.setItem(USER_KEY, JSON.stringify(userObj));
+    setUser(userObj);
   }, []);
 
   const register = useCallback(async (name: string, email: string, password = "password123") => {
+    let res;
     try {
-      const res = await apiClient.post("/api/auth/register", { name, email, password });
-      const authData = res.data;
-      const jwtToken = authData.token || authData.jwt || authData.accessToken;
-      const userObj = {
-        name: authData.name || name,
-        email: authData.email || email,
-        token: jwtToken,
-      };
-
-      if (jwtToken) {
-        localStorage.setItem(TOKEN_KEY, jwtToken);
-        setToken(jwtToken);
-      }
-      localStorage.setItem(USER_KEY, JSON.stringify(userObj));
-      setUser(userObj);
-    } catch (err) {
-      console.warn("Backend auth/register failed, setting client session", err);
-      const fallbackToken = "demo-jwt-token";
-      const fallbackUser = { name, email, token: fallbackToken };
-      localStorage.setItem(TOKEN_KEY, fallbackToken);
-      localStorage.setItem(USER_KEY, JSON.stringify(fallbackUser));
-      setToken(fallbackToken);
-      setUser(fallbackUser);
+      res = await apiClient.post("/api/v1/auth/register", { name, email, password });
+    } catch {
+      res = await apiClient.post("/api/auth/register", { name, email, password });
     }
+    const authData = res.data;
+    const jwtToken = authData.jwt_token || authData.token || authData.jwt || authData.accessToken;
+    const userObj = {
+      name: authData.name || name,
+      email: authData.email || email,
+      token: jwtToken,
+    };
+
+    if (jwtToken) {
+      localStorage.setItem(TOKEN_KEY, jwtToken);
+      localStorage.setItem("lynkr_token", jwtToken);
+      setToken(jwtToken);
+    }
+    localStorage.setItem(USER_KEY, JSON.stringify(userObj));
+    setUser(userObj);
   }, []);
 
   const logout = useCallback(() => {
@@ -163,6 +160,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     setLinks([]);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem("lynkr_token");
   }, []);
 
   const createLink = useCallback(
@@ -173,32 +171,29 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         expiration: expiration || "never",
       };
 
+      let res;
       try {
-        const res = await apiClient.post("/api/links", payload);
-        const newLink = transformLink(res.data);
-        setLinks((prev) => [newLink, ...prev.filter((l) => l.id !== newLink.id)]);
-        return newLink;
-      } catch (err) {
-        console.warn("Backend create link failed, creating locally", err);
-        const fallbackSlug = alias?.trim() || Math.random().toString(36).substring(2, 8);
-        const fallbackLink: LinkRecord = {
-          id: `${Date.now()}`,
-          slug: fallbackSlug,
-          original,
-          clicks: 0,
-          createdAt: new Date().toISOString(),
-          expiresAt: null,
-        };
-        setLinks((prev) => [fallbackLink, ...prev]);
-        return fallbackLink;
+        res = await apiClient.post("/api/v1/urls/shorten", payload);
+      } catch (err: any) {
+        if (err.response && (err.response.status === 400 || err.response.status === 409)) {
+          throw err;
+        }
+        res = await apiClient.post("/api/links", payload);
       }
+      const newLink = transformLink(res.data);
+      setLinks((prev) => [newLink, ...prev.filter((l) => l.id !== newLink.id)]);
+      return newLink;
     },
     []
   );
 
   const deleteLink = useCallback(async (id: string) => {
     try {
-      await apiClient.delete(`/api/links/${id}`);
+      try {
+        await apiClient.delete(`/api/v1/urls/${id}`);
+      } catch {
+        await apiClient.delete(`/api/links/${id}`);
+      }
     } catch (err) {
       console.warn(`Backend delete link ${id} failed`, err);
     } finally {
