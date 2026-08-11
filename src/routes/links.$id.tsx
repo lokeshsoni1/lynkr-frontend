@@ -1,0 +1,136 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { BreakdownBars, ClicksChart, StatCard, StatusPill } from "@/components/analytics-widgets";
+import { useStore } from "@/lib/store";
+import {
+  BROWSERS,
+  CLICKS_30D,
+  CLICKS_7D,
+  DEVICES,
+  RECENT_ACTIVITY,
+  REFERRERS,
+  formatDate,
+  isExpired,
+} from "@/lib/mock-data";
+
+export const Route = createFileRoute("/links/$id")({
+  head: () => ({
+    meta: [
+      { title: "Link analytics — Lynkr" },
+      { name: "description", content: "Clicks, devices, browsers and referrers for a single Lynkr short link." },
+      { property: "og:title", content: "Link analytics — Lynkr" },
+      { property: "og:description", content: "Detailed performance for one short link." },
+    ],
+  }),
+  component: LinkDetail,
+});
+
+function LinkDetail() {
+  const { id } = Route.useParams();
+  const { links } = useStore();
+  const link = links.find((l) => l.id === id);
+  const [range, setRange] = useState<"7" | "30">("7");
+
+  if (!link) {
+    return (
+      <div className="mx-auto max-w-6xl px-6 py-24">
+        <h1 className="text-2xl font-semibold tracking-tight">Link not found</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          This link may have been deleted.
+        </p>
+        <Button asChild className="mt-6">
+          <Link to="/links">Back to My Links</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const expired = isExpired(link);
+
+  return (
+    <div className="mx-auto max-w-6xl px-6 py-14">
+      <Link to="/links" className="text-sm text-muted-foreground hover:text-foreground">
+        ← My Links
+      </Link>
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <h1 className="font-mono text-2xl font-semibold tracking-tight">
+          lynkr.ly/{link.slug}
+        </h1>
+        <StatusPill expired={expired} />
+      </div>
+      <p className="mt-2 max-w-2xl truncate text-sm text-muted-foreground">{link.original}</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Created {formatDate(link.createdAt)} · Expires {formatDate(link.expiresAt)}
+      </p>
+
+      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="TOTAL CLICKS" value={link.clicks.toLocaleString()} />
+        <StatCard label="UNIQUE VISITORS" value={Math.round(link.clicks * 0.69).toLocaleString()} />
+        <StatCard label="AVG. CLICKS / DAY" value={Math.max(1, Math.round(link.clicks / 14)).toString()} />
+        <StatCard label="STATUS" value={expired ? "Expired" : "Active"} />
+      </div>
+
+      <div className="panel mt-6 p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <p className="eyebrow">CLICKS OVER TIME</p>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant={range === "7" ? "default" : "outline"}
+              onClick={() => setRange("7")}
+            >
+              7 Days
+            </Button>
+            <Button
+              size="sm"
+              variant={range === "30" ? "default" : "outline"}
+              onClick={() => setRange("30")}
+            >
+              30 Days
+            </Button>
+          </div>
+        </div>
+        <div className="mt-6">
+          <ClicksChart data={range === "7" ? CLICKS_7D : CLICKS_30D} />
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        <div className="panel p-6">
+          <p className="eyebrow">DEVICES</p>
+          <div className="mt-5">
+            <BreakdownBars items={DEVICES} />
+          </div>
+        </div>
+        <div className="panel p-6">
+          <p className="eyebrow">BROWSERS</p>
+          <div className="mt-5">
+            <BreakdownBars items={BROWSERS} />
+          </div>
+        </div>
+        <div className="panel p-6">
+          <p className="eyebrow">TRAFFIC SOURCES</p>
+          <div className="mt-5">
+            <BreakdownBars items={REFERRERS} />
+          </div>
+        </div>
+      </div>
+
+      <div className="panel mt-6 p-6">
+        <p className="eyebrow">RECENT ACTIVITY</p>
+        <ul className="mt-5 divide-y divide-border">
+          {RECENT_ACTIVITY.map((a, i) => (
+            <li key={i} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+              <span className="font-mono text-muted-foreground">lynkr.ly/{link.slug}</span>
+              <span className="text-muted-foreground">
+                {a.device} · {a.source}
+              </span>
+              <span className="text-xs text-muted-foreground">{a.time}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
