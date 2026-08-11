@@ -1,3 +1,5 @@
+import { SHORT_URL_PREFIX } from "@/config/constants";
+
 export type LinkRecord = {
   id: string;
   slug: string;
@@ -7,7 +9,7 @@ export type LinkRecord = {
   expiresAt: string | null;
 };
 
-export const SHORT_DOMAIN = "https://lynkr-backend-3kal.onrender.com";
+export const SHORT_DOMAIN = SHORT_URL_PREFIX.replace(/\/$/, "");
 
 export const EXPIRATION_OPTIONS = [
   { value: "never", label: "Never" },

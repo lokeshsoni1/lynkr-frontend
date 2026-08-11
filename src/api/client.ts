@@ -1,8 +1,7 @@
 import axios from "axios";
+import { API_BASE_URL } from "@/config/constants";
 
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  "https://lynkr-backend-3kal.onrender.com";
+export { API_BASE_URL };
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

@@ -15,7 +15,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { EXPIRATION_OPTIONS, SHORT_DOMAIN } from "@/lib/mock-data";
+import { EXPIRATION_OPTIONS } from "@/lib/mock-data";
+import { getShortUrl } from "@/config/constants";
 import { useStore } from "@/lib/store";
 import { Check, Copy, Link2 } from "lucide-react";
 
@@ -38,7 +39,7 @@ export function ShortenerCard() {
     setError(null);
     try {
       const link = await createLink({ original: url.trim(), alias, expiration });
-      setResult(`${SHORT_DOMAIN}/${link.slug}`);
+      setResult(getShortUrl(link.slug));
     } catch (err: any) {
       if (err.response && (err.response.status === 400 || err.response.status === 409)) {
         setError("Custom alias is already in use. Try another.");

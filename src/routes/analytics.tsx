@@ -11,9 +11,9 @@ import {
   DEVICES,
   RECENT_ACTIVITY,
   REFERRERS,
-  SHORT_DOMAIN,
   isExpired,
 } from "@/lib/mock-data";
+import { getShortUrl } from "@/config/constants";
 
 export const Route = createFileRoute("/analytics")({
   head: () => ({
@@ -142,7 +142,7 @@ function AnalyticsPage() {
           <ul className="mt-5 divide-y divide-border">
             {RECENT_ACTIVITY.map((a, i) => (
               <li key={i} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
-                <span className="font-mono text-muted-foreground">{SHORT_DOMAIN.replace(/^https?:\/\//, "")}/{a.slug}</span>
+                <span className="font-mono text-muted-foreground">{getShortUrl(a.slug)}</span>
                 <span className="text-muted-foreground">
                   {a.device} · {a.source}
                 </span>

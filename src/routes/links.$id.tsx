@@ -11,11 +11,11 @@ import {
   DEVICES,
   RECENT_ACTIVITY,
   REFERRERS,
-  SHORT_DOMAIN,
   formatDate,
   isExpired,
   type LinkRecord,
 } from "@/lib/mock-data";
+import { getShortUrl } from "@/config/constants";
 
 export const Route = createFileRoute("/links/$id")({
   head: () => ({
@@ -79,7 +79,7 @@ function LinkDetail() {
   }
 
   const expired = isExpired(link);
-  const displayUrl = `${SHORT_DOMAIN.replace(/^https?:\/\//, "")}/${link.slug}`;
+  const displayUrl = getShortUrl(link.slug);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">

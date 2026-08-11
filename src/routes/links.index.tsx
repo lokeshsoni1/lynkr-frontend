@@ -29,11 +29,11 @@ import {
 import { useStore } from "@/lib/store";
 import {
   EXPIRATION_OPTIONS,
-  SHORT_DOMAIN,
   formatDate,
   isExpired,
   type LinkRecord,
 } from "@/lib/mock-data";
+import { getShortUrl } from "@/config/constants";
 import { BarChart3, Check, Copy, Search, Trash2 } from "lucide-react";
 import { StatusPill } from "@/components/analytics-widgets";
 import {
@@ -84,7 +84,7 @@ function LinksPage() {
 
   const copy = async (link: LinkRecord) => {
     try {
-      await navigator.clipboard.writeText(`${SHORT_DOMAIN}/${link.slug}`);
+      await navigator.clipboard.writeText(getShortUrl(link.slug));
     } catch {
       /* ignore */
     }
@@ -142,7 +142,7 @@ function LinksPage() {
             )}
             {filtered.map((link) => {
               const expired = isExpired(link);
-              const displayUrl = `${SHORT_DOMAIN.replace(/^https?:\/\//, "")}/${link.slug}`;
+              const displayUrl = getShortUrl(link.slug);
               return (
                 <TableRow key={link.id} className="transition-colors hover:bg-secondary/40">
                   <TableCell className="font-mono text-sm">{displayUrl}</TableCell>
@@ -304,7 +304,7 @@ function LinksPage() {
           <DialogHeader>
             <DialogTitle>Delete link</DialogTitle>
             <DialogDescription>
-              This will permanently delete {SHORT_DOMAIN.replace(/^https?:\/\//, "")}/{toDelete?.slug}. Anyone visiting it
+              This will permanently delete {toDelete ? getShortUrl(toDelete.slug) : ""}. Anyone visiting it
               will get a 404.
             </DialogDescription>
           </DialogHeader>
