@@ -79,24 +79,46 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const logout = useCallback(() => {
+    setUser(null);
+    setToken(null);
+    setLinks([]);
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem("jwt_token");
+    localStorage.removeItem("lynkr_token");
+  }, []);
+
   const fetchLinks = useCallback(async () => {
     setLoadingLinks(true);
     try {
       let res;
       try {
-        res = await apiClient.get("/api/v1/urls");
-      } catch {
-        res = await apiClient.get("/api/links");
+        res = await apiClient.get("/api/v1/urls/my-links");
+      } catch (e: any) {
+        if (e.response && e.response.status === 401) {
+          logout();
+          return;
+        }
+        try {
+          res = await apiClient.get("/api/v1/urls");
+        } catch {
+          res = await apiClient.get("/api/links");
+        }
       }
       const rawData = Array.isArray(res.data) ? res.data : res.data.content || [];
       const transformed = rawData.map(transformLink);
       setLinks(transformed);
-    } catch (err) {
-      console.warn("Could not fetch links from backend", err);
+    } catch (err: any) {
+      if (err.response && err.response.status === 401) {
+        logout();
+      } else {
+        console.warn("Could not fetch links from backend", err);
+      }
     } finally {
       setLoadingLinks(false);
     }
-  }, []);
+  }, [logout]);
 
   useEffect(() => {
     if (token) {
@@ -154,14 +176,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     setUser(userObj);
   }, []);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    setToken(null);
-    setLinks([]);
-    localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem("lynkr_token");
-  }, []);
+
 
   const createLink = useCallback(
     async ({ original, alias, expiration }: { original: string; alias?: string; expiration?: string }): Promise<LinkRecord> => {
