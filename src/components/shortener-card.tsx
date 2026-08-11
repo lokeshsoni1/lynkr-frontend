@@ -71,11 +71,12 @@ export function ShortenerCard() {
         <div className="relative flex-1">
           <Link2 className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground z-20 pointer-events-none" />
           <input
-            type="text"
+            type="url"
+            required
             value={inputUrl}
             onChange={(e) => setInputUrl(e.target.value)}
-            placeholder="Paste your long URL here..."
-            className="relative z-10 h-12 w-full rounded-lg border border-input bg-transparent pl-9 pr-4 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring md:text-sm"
+            placeholder="Paste long URL here (e.g. https://example.com)..."
+            className="relative z-20 h-12 w-full rounded-lg border border-input bg-transparent pl-9 pr-4 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring md:text-sm"
             autoFocus
             autoComplete="off"
             spellCheck={false}

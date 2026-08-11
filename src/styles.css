@@ -110,13 +110,6 @@
 
   body {
     background-color: var(--color-background);
-    background-image: radial-gradient(
-      ellipse 80% 80% at 50% -20%,
-      color-mix(in oklab, var(--color-primary) 16%, transparent),
-      transparent 70%
-    );
-    background-repeat: no-repeat;
-    background-attachment: fixed;
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
@@ -137,10 +130,9 @@
 }
 
 @utility panel {
-  background-color: color-mix(in oklab, var(--color-card) 55%, transparent);
-  border: 1px solid color-mix(in oklab, var(--color-border) 85%, transparent);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
-  backdrop-filter: blur(8px);
   transition: border-color 300ms ease, background-color 300ms ease;
 }
 
