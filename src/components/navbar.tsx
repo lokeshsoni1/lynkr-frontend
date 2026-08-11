@@ -19,25 +19,25 @@ const NAV = [
 ] as const;
 
 const linkBase =
-  "rounded-lg px-3 py-1.5 text-sm outline-none transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-secondary/60 focus-visible:text-foreground";
+  "rounded-lg px-3 py-1.5 text-sm outline-none transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-secondary/60 focus-visible:text-foreground relative z-50 pointer-events-auto cursor-pointer";
 const linkActive =
-  "bg-secondary/90 text-foreground font-medium border border-border/80 shadow-inner";
+  "bg-secondary/90 text-foreground font-medium border border-border/80 shadow-inner relative z-50 pointer-events-auto cursor-pointer";
 
 export function Navbar() {
   const { user, logout } = useStore();
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/95 relative pointer-events-auto">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6 relative z-50 pointer-events-auto">
         <Link
           to="/"
-          className="text-sm font-semibold tracking-[0.24em] text-foreground outline-none"
+          className="text-sm font-semibold tracking-[0.24em] text-foreground outline-none relative z-50 pointer-events-auto cursor-pointer"
         >
           LYNKR
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 md:flex relative z-50 pointer-events-auto">
           {NAV.map((item) => (
             <Link
               key={item.to}
