@@ -33,7 +33,7 @@ import {
   isExpired,
   type LinkRecord,
 } from "@/lib/mock-data";
-import { getShortUrl } from "@/config/constants";
+import { formatShortUrl, getShortUrl } from "@/config/constants";
 import { BarChart3, Check, Copy, Search, Trash2 } from "lucide-react";
 import { StatusPill } from "@/components/analytics-widgets";
 import {
@@ -84,7 +84,8 @@ function LinksPage() {
 
   const copy = async (link: LinkRecord) => {
     try {
-      await navigator.clipboard.writeText(getShortUrl(link.slug));
+      const rawCodeOrUrl = (link as any).shortUrl || (link as any).shortCode || link.slug;
+      await navigator.clipboard.writeText(formatShortUrl(rawCodeOrUrl));
     } catch {
       /* ignore */
     }
@@ -142,7 +143,8 @@ function LinksPage() {
             )}
             {filtered.map((link) => {
               const expired = isExpired(link);
-              const displayUrl = getShortUrl(link.slug);
+              const rawCodeOrUrl = (link as any).shortUrl || (link as any).shortCode || link.slug;
+              const displayUrl = formatShortUrl(rawCodeOrUrl);
               return (
                 <TableRow key={link.id} className="transition-colors hover:bg-secondary/40">
                   <TableCell className="font-mono text-sm">{displayUrl}</TableCell>

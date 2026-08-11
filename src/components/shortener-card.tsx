@@ -16,7 +16,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { EXPIRATION_OPTIONS } from "@/lib/mock-data";
-import { getShortUrl } from "@/config/constants";
+import { formatShortUrl, getShortUrl } from "@/config/constants";
 import { useStore } from "@/lib/store";
 import { Check, Copy, Link2 } from "lucide-react";
 
@@ -39,8 +39,8 @@ export function ShortenerCard() {
     setError(null);
     try {
       const link = await createLink({ original: url.trim(), alias, expiration });
-      const code = link.slug || alias?.trim() || "";
-      const generatedShortUrl = `https://lynkr-backend-3kal.onrender.com/${code}`;
+      const rawCodeOrUrl = (link as any).shortUrl || (link as any).shortCode || link.slug || alias?.trim() || "";
+      const generatedShortUrl = formatShortUrl(rawCodeOrUrl);
       setResult(generatedShortUrl);
     } catch (err: any) {
       if (err.response && (err.response.status === 400 || err.response.status === 409)) {
@@ -57,7 +57,7 @@ export function ShortenerCard() {
   const copy = async () => {
     if (!result) return;
     try {
-      await navigator.clipboard.writeText(result);
+      await navigator.clipboard.writeText(formatShortUrl(result));
     } catch {
       /* ignore */
     }
