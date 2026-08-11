@@ -39,7 +39,9 @@ export function ShortenerCard() {
     setError(null);
     try {
       const link = await createLink({ original: url.trim(), alias, expiration });
-      setResult(getShortUrl(link.slug));
+      const code = link.slug || alias?.trim() || "";
+      const generatedShortUrl = `https://lynkr-backend-3kal.onrender.com/${code}`;
+      setResult(generatedShortUrl);
     } catch (err: any) {
       if (err.response && (err.response.status === 400 || err.response.status === 409)) {
         setError("Custom alias is already in use. Try another.");
