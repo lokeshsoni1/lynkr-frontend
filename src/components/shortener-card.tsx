@@ -69,12 +69,14 @@ export function ShortenerCard() {
     <div className="panel p-6 shadow-2xl transition-all duration-300 focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/20 sm:p-8">
       <form onSubmit={submit} className="flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
-          <Link2 className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+          <Link2 className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground z-20 pointer-events-none" />
+          <input
+            type="text"
             value={inputUrl}
             onChange={(e) => setInputUrl(e.target.value)}
             placeholder="Paste your long URL here..."
-            className="h-12 w-full pl-9"
+            className="relative z-10 h-12 w-full rounded-lg border border-input bg-transparent pl-9 pr-4 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring md:text-sm"
+            autoFocus
             autoComplete="off"
             spellCheck={false}
           />
