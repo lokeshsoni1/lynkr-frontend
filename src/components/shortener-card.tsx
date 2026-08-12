@@ -67,16 +67,15 @@ export function ShortenerCard() {
 
   return (
     <div className="panel p-6 shadow-2xl transition-all duration-300 focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/20 sm:p-8 relative z-50 pointer-events-auto">
-      <form onSubmit={submit} className="relative z-50 w-full max-w-2xl mx-auto flex flex-col gap-3 sm:flex-row pointer-events-auto">
+      <form onSubmit={submit} className="relative z-50 w-full max-w-2xl mx-auto space-y-4 pointer-events-auto">
         <div className="relative flex-1 pointer-events-auto">
-          <Link2 className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground z-10" />
           <input
             type="url"
             required
             value={inputUrl}
             onChange={(e) => setInputUrl(e.target.value)}
             placeholder="Paste your long URL here (e.g. https://example.com)..."
-            className="relative z-50 h-12 w-full rounded-xl border border-zinc-800 bg-zinc-900 pl-9 pr-4 text-base text-white shadow-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:border-blue-500 pointer-events-auto md:text-sm"
+            className="w-full px-5 py-4 bg-zinc-900 text-white rounded-xl border border-zinc-800 focus:outline-none focus:border-blue-500 relative z-50 pointer-events-auto text-base md:text-sm"
             autoFocus
             autoComplete="off"
             spellCheck={false}
@@ -84,7 +83,7 @@ export function ShortenerCard() {
         </div>
         <button
           type="submit"
-          className="relative z-50 h-12 px-6 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-all cursor-pointer pointer-events-auto disabled:opacity-50 sm:w-40"
+          className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl cursor-pointer transition-all relative z-50 pointer-events-auto disabled:opacity-50"
           disabled={loading}
         >
           {loading ? "Shortening..." : "Shorten URL"}
